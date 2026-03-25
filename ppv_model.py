@@ -27,7 +27,7 @@ class PPVModel:
         self.distance_m = distance_m
 
     def predict(self, mcpd_kg: float)->dict:
-        scaled_dist = self.distance_m/msth.sqrt(mcpd_kg)
+        scaled_dist = self.distance_m/math.sqrt(mcpd_kg)
         scaled_dist = round(scaled_dist,3)
         ppv = self.K*(scaled_dist**(-self.alpha))
         ppv = round(ppv,3)
@@ -81,7 +81,7 @@ class PPVModel:
         points = []
         for d in range(50, 1001, 32):
             sd  = d / math.sqrt(mcpd_kg)
-            ppv = round(sself.K * (sd ** (-self.alpha)), 3)
+            ppv = round(self.K * (sd ** (-self.alpha)), 3)
             points.append({"distance_m": d, "ppv_mm_s": ppv, "scaled_dist": round(sd, 2)})
         return points
 
