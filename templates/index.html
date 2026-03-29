@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlastSeq — Blasthole Firing Sequence Designer</title>
+
+  <!-- CSS served by Flask from /static/ -->
+  <link rel="stylesheet" href="/static/src/styles/main.css"/>
+
+  <!-- Chart.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="7"  cy="7"  r="4" fill="#E24B4A"/>
+        <circle cx="14" cy="7"  r="4" fill="#EF9F27"/>
+        <circle cx="21" cy="7"  r="4" fill="#1D9E75"/>
+        <circle cx="7"  cy="14" r="4" fill="#EF9F27"/>
+        <circle cx="14" cy="14" r="4" fill="#1D9E75"/>
+        <circle cx="21" cy="14" r="4" fill="#1D9E75"/>
+        <circle cx="7"  cy="21" r="4" fill="#1D9E75"/>
+        <circle cx="14" cy="21" r="4" fill="#1D9E75"/>
+        <circle cx="21" cy="21" r="4" fill="#1D9E75"/>
+      </svg>
+    </div>
+    <div>
+      <h1>BlastSeq</h1>
+      <div class="header-sub">Blasthole Firing Sequence Designer</div>
+    </div>
+    <span class="status-bar" id="statusBar">Connecting…</span>
+    <div class="header-actions">
+      <button class="btn-outline" id="exportCSVBtn">↓ CSV</button>
+      <button class="btn-outline" id="exportReportBtn">↗ Report</button>
+    </div>
+  </header>
+
+  <!-- ── SIDEBAR ────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sec-label">Production &amp; Site</div>
+
+    <div class="field">
+      <label>Production required (tonnes)</label>
+      <input type="number" id="production" value="50000" min="1000" step="1000"/>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Hole diameter (mm)</label>
+        <input type="number" id="diameter" value="115" min="50" max="500" step="5"/>
+      </div>
+      <div class="field">
+        <label>Rock density (t/m³)</label>
+        <input type="number" id="density" value="2.7" step="0.1" min="1.5" max="4.0"/>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Bench depth (m)</label>
+        <input type="number" id="depth" value="10" min="2" max="60" step="0.5"/>
+      </div>
+      <div class="field">
+        <label>No. of benches</label>
+        <input type="number" id="benches" value="3" min="1" max="20"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Explosive type</label>
+      <select id="explosiveType">
+        <option value="ANFO">ANFO (0.85 t/m³)</option>
+        <option value="Emulsion">Emulsion (1.15 t/m³)</option>
+        <option value="ANFO/Emulsion blend">ANFO/Emulsion blend (1.00)</option>
+        <option value="Heavy ANFO">Heavy ANFO (1.05 t/m³)</option>
+        <option value="Slurry">Slurry (1.20 t/m³)</option>
+      </select>
+    </div>
+
+    <div class="sec-label">PPV Parameters</div>
+
+    <div class="field">
+      <label>Reference distance (m)</label>
+      <input type="number" id="ppvDist" value="200" min="10" step="10"/>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>K (site constant)</label>
+        <input type="number" id="kConst" value="1140" step="10"/>
+        <div class="field-hint">Typical: 160–2000</div>
+      </div>
+      <div class="field">
+        <label>α (exponent)</label>
+        <input type="number" id="alpha" value="1.6" step="0.05" min="0.5" max="5.0"/>
+        <div class="field-hint">Typical: 1.5–2.0</div>
+      </div>
+    </div>
+
+    <div class="sec-label">Delay Timing</div>
+
+    <div class="field">
+      <label>Inter-hole delay — select one</label>
+      <div class="delay-group" id="holeDelayGroup"></div>
+      <div class="field-hint">
+        Row delay is auto-selected as the next standard value above
+        the hole delay, enforcing row delay &gt; hole delay.
+      </div>
+    </div>
+    <div class="row-delay-badge" id="rowDelayBadge">Row delay → —</div>
+
+    <div class="sec-label">Pattern</div>
+    <div class="field">
+      <label>Preference</label>
+      <select id="seqPref">
+        <option value="auto">Auto — minimise MCPD &amp; PPV</option>
+        <option value="row">Row-to-row</option>
+        <option value="diagonal">Diagonal (echelon)</option>
+        <option value="v_shape">V-shape (chevron)</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" id="calcBtn">▶ Calculate &amp; Optimise</button>
+
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Metrics bar -->
+    <div class="metrics-bar">
+      <div class="metric"><div class="m-label">Burden</div><div class="m-val" id="m-burden">—</div><div class="m-unit">m</div></div>
+      <div class="metric"><div class="m-label">Spacing</div><div class="m-val" id="m-spacing">—</div><div class="m-unit">m</div></div>
+      <div class="metric"><div class="m-label">Stemming</div><div class="m-val" id="m-stemming">—</div><div class="m-unit">m</div></div>
+      <div class="metric"><div class="m-label">Total holes</div><div class="m-val" id="m-holes">—</div><div class="m-unit"></div></div>
+      <div class="metric highlight"><div class="m-label">MCPD</div><div class="m-val" id="m-mcpd">—</div><div class="m-unit">kg</div></div>
+      <div class="metric"><div class="m-label">PPV</div><div class="m-val" id="m-ppv">—</div><div class="m-unit">mm/s</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="visual">Blast Grid</button>
+      <button class="tab-btn" data-tab="results">Results &amp; Schedule</button>
+      <button class="tab-btn" data-tab="compare">Compare Patterns</button>
+      <button class="tab-btn" data-tab="ppv">PPV Analysis</button>
+    </nav>
+
+    <!-- ── Blast Grid ──────────────────────────────────────── -->
+    <div class="tab-panel active" id="panel-visual">
+      <div class="canvas-controls">
+        <button class="icon-btn" id="animBtn">▶ Animate</button>
+        <button class="icon-btn" id="resetBtn">↺ Reset</button>
+        <span class="tag-chip" id="patternChip">—</span>
+        <span class="tag-chip" id="delayChip">—</span>
+        <span class="step-indicator" id="stepIndicator"></span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="blastCanvas"></canvas>
+      </div>
+      <div class="canvas-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#E24B4A"></div>Pending</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#EF9F27"></div>Currently firing</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Fired</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>Stemming cap</div>
+        <div class="legend-item" style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-3)">Number = delay (ms)</div>
+      </div>
+    </div>
+
+    <!-- ── Results & Schedule ──────────────────────────────── -->
+    <div class="tab-panel" id="panel-results">
+      <div class="results-panel">
+        <div class="r-sec-title">Geometry &amp; Output</div>
+        <div class="result-grid" id="resultGrid"></div>
+        <div class="r-sec-title">Firing Schedule</div>
+        <div style="overflow-x:auto">
+          <table class="sched-table">
+            <thead><tr>
+              <th>Hole</th><th>Row</th><th>Col</th><th>Bench</th>
+              <th>Delay (ms)</th><th>Simultaneous</th><th>Delay charge (kg)</th>
+            </tr></thead>
+            <tbody id="schedTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Compare Patterns ────────────────────────────────── -->
+    <div class="tab-panel" id="panel-compare">
+      <div class="compare-panel">
+        <div class="r-sec-title">Pattern Comparison</div>
+        <div class="compare-grid" id="compareGrid"></div>
+        <div class="chart-wrap">
+          <canvas id="mcpdChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PPV Analysis ────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-ppv">
+      <div class="ppv-panel">
+        <div class="r-sec-title">PPV vs Distance Curve</div>
+        <div class="ppv-chart-wrap">
+          <canvas id="ppvChart"></canvas>
+        </div>
+        <div class="r-sec-title">Regulatory Limits Check</div>
+        <table class="ppv-table">
+          <thead><tr><th>Structure type</th><th>Limit (mm/s)</th><th>Status</th></tr></thead>
+          <tbody id="ppvLimitsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- JS module loaded from /static/ — served by Flask -->
+<script type="module" src="/static/src/main.js"></script>
+</body>
+</html>

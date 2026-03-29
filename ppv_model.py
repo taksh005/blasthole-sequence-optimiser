@@ -16,7 +16,7 @@ PPV_LIMITS = [
 ]
 
 class PPVModel:
-    def __iniit__(
+    def __init__(
             self,
             K: float,
             alpha: float,

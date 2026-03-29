@@ -50,9 +50,9 @@ class FiringSequence:
         rd = self.row_delay_ms
 
         if self.pattern == "row":
-            return r*rd + c*hd
+            return r*rd
         elif self.pattern == "diagonal":
-            return (r+c)*hd
+            return r*rd + c*hd
         elif self.pattern == "v_shape":
             mid = (self.cols-1)/2.0
             dist_from_centre = abs(c-mid)
@@ -87,26 +87,42 @@ class FiringSequence:
 
     def _compute_mcpd(self):
         self.delay_groups: dict[int,list[Hole]] = {}
+        WINDOW_MS = 8
         for h in self.holes:
-            self.deay_groups.setdefault(h.delay_ms,[]).append(h)
-
-        max_simultaneous = max(len(g) for g in self.delay_groups.values())
-        worst_delay_ms   = max(
-            self.delay_groups, key=lambda k: len(self.delay_groups[k])
-        )
-
-        self.max_simultaneous = max_simultaneous
-        self.worst_delay_ms   = worst_delay_ms
-        self.mcpd             = round(max_simultaneous * self.charge_per_hole, 2)
+            self.delay_groups.setdefault(h.delay_ms,[]).append(h)
 
         delays = sorted(self.delay_groups.keys())
+
+        max_simultaneous = 0
+        worst_delay_ms   = delays[0] if delays else 0
+
+        for d in delays:
+            count = sum(
+                len(self.delay_groups[other])
+                for other in delays
+                if d <= other <= d + WINDOW_MS
+            )
+        if count > max_simultaneous:
+            max_simultaneous = count
+            worst_delay_ms   = d
+
+
+        self.max_simultaneous = max_simultaneous
+        self.worst_delay_ms = worst_delay_ms
+        self.mcpd = round(max_simultaneous * self.charge_per_hole, 2)
+        self.window_ms = WINDOW_MS
+        self.unique_delays = delays
+        self.num_delay_steps = len(delays)
+        self.blast_duration = delays[-1] if delays else 0
+
         self.unique_delays   = delays
         self.num_delay_steps = len(delays)
         self.blast_duration  = delays[-1] if delays else 0
 
         logger.info(
-            "MCPD=%.1f kg | max_simultaneous=%d holes | %d delay steps | duration=%d ms",
-            self.mcpd, self.max_simultaneous, self.num_delay_steps, self.blast_duration
+            "MCPD=%.1f kg | max_simultaneous=%d holes (±%dms window) | %d delay steps | duration=%d ms",
+            self.mcpd, self.max_simultaneous, WINDOW_MS,
+            self.num_delay_steps, self.blast_duration
         )
 
     def schedule(self) -> list[dict]:

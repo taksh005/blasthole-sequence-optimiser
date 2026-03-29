@@ -19,7 +19,7 @@ class BlastGeometry:
             bench_depth: float,
             explosive_type: str,
             ks: float = 1.25,
-            kt: float = 0.70,
+            kt: float = 1.00,
             kj: float = 0.30
     ):
         self.diameter_mm = diameter_mm
@@ -34,7 +34,7 @@ class BlastGeometry:
 
     def _compute(self):
         d = self.diameter_mm / 1000.0
-        self.burden = round(25*d,3)
+        self.burden = round(0.024*self.diameter_mm + 0.85,3)
         self.spacing = round(self.ks*self.burden,3)
         self.stemming = round(self.kt*self.burden,3)
         self.subgrade = round(self.kj*self.burden,3)
