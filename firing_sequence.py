@@ -52,7 +52,7 @@ class FiringSequence:
         if self.pattern == "row":
             return r*rd
         elif self.pattern == "diagonal":
-            return r*rd + c*hd
+            return r*hd + c*rd
         elif self.pattern == "v_shape":
             mid = (self.cols-1)/2.0
             dist_from_centre = abs(c-mid)
@@ -100,7 +100,7 @@ class FiringSequence:
             count = sum(
                 len(self.delay_groups[other])
                 for other in delays
-                if d <= other <= d + WINDOW_MS
+                if d <= other < d + WINDOW_MS
             )
         if count > max_simultaneous:
             max_simultaneous = count
@@ -131,7 +131,7 @@ class FiringSequence:
             sim = len(self.delay_groups[h.delay_ms])
             rows.append({
                 "id":                h.id,
-                "row":               h.row + 1,       # 1-indexed for display
+                "row":               h.row + 1,       
                 "col":               h.col + 1,
                 "bench":             h.bench,
                 "delay_ms":          h.delay_ms,

@@ -8,7 +8,7 @@ and all API endpoints at /api/...
 Run:
     python app.py
     pip install flask flask-cors
-    → open http://localhost:5000
+    → open http://localhost:8000
 """
 
 import logging
@@ -189,7 +189,7 @@ def ppv_curve():
 if __name__ == "__main__":
     print()
     print("=" * 52)
-    print("  BlastSeq — http://localhost:5000")
+    print("  BlastSeq — http://localhost:8000")
     print("  Open that URL in your browser.")
     print("=" * 52)
     print()
