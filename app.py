@@ -22,12 +22,12 @@ from flask_cors import CORS
 # ── Path setup so 'models' package is importable ────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
-
+from database import init_db, log_run
 from optimizer       import BlastOptimizer
 from ppv_model       import PPVModel, PPV_LIMITS
 from firing_sequence import FiringSequence, STANDARD_DELAYS
 from blast_geometry  import BlastGeometry
-
+init_db()
 # ── App ──────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -115,19 +115,45 @@ def optimise():
             return bad_request(f"hole_delay_ms must be one of {STANDARD_DELAYS}")
 
         optimizer = BlastOptimizer(
-            production_tonnes = float(data["production_tonnes"]),
+            production_tonnes = float(data.get("production_tonnes",0)),
             diameter_mm       = float(data["diameter_mm"]),
             rock_density      = float(data["rock_density"]),
             bench_depth       = float(data["bench_depth"]),
-            num_benches       = int(data["num_benches"]),
+            num_benches       = int(data.get("num_benches",1)),
             hole_delay_ms     = hole_delay_ms,
             ppv_distance_m    = float(data["ppv_distance_m"]),
             K                 = float(data["K"]),
             alpha             = float(data["alpha"]),
             explosive_type    = data.get("explosive_type", "ANFO"),
             preferred_pattern = data.get("preferred_pattern", "auto"),
+            geometry_mode     = data.get("geometry_mode","standard"),
+            custom_burden     = float(data["custom_burden"]) if data.get("custom_burden") else None,
+            ks                = float(data.get("ks",1.25)),
+            kt                = float(data.get("kt",1.00)),
+            kj                = float(data.get("kj",0.30)),
+            input_mode        = data.get("input_mode","production"),
+            manual_rows       = int(data["rows"]) if data.get("rows") else None,
+            manual_cols       = int(data["cols"]) if data.get("cols") else None,
         )
-        return jsonify(optimizer.to_dict())
+        result = optimizer.to_dict()
+        log_run(
+        inputs={
+            "diameter_mm":   data["diameter_mm"],
+            "rock_density":  data["rock_density"],
+            "bench_depth":   data["bench_depth"],
+            "hole_delay_ms": hole_delay_ms,
+            "geometry_mode": data.get("geometry_mode", "standard"),
+            "input_mode":    data.get("input_mode", "production"),
+        },
+        outputs={
+            "best_pattern": result["best_pattern"],
+            "mcpd":         result["chosen"]["mcpd"],
+            "ppv":          result["chosen"]["ppv"]["ppv_mm_s"],
+            "burden":       result["geometry"]["burden"],
+            "total_holes":  result["distribution"]["total_holes"],
+        }
+        )
+        return jsonify(result)
 
     except ValueError as e:
         logger.warning("Validation error: %s", e)
