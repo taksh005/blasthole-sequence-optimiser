@@ -1,7 +1,7 @@
-from blast_geometry    import BlastGeometry
+from blast_geometry import BlastGeometry
 from hole_distribution import HoleDistribution
-from firing_sequence   import FiringSequence, STANDARD_DELAYS, select_row_delay
-from ppv_model         import PPVModel
+from firing_sequence import FiringSequence, STANDARD_DELAYS, select_row_delay
+from ppv_model import PPVModel
 import logging
 logger = logging.getLogger(__name__)
 
@@ -47,18 +47,41 @@ class BlastOptimizer:
         alpha: float,
         explosive_type: str = "ANFO",
         preferred_pattern: str = "auto",
+        geometry_mode: str ="standard",
+        custom_burden: float = None,
+        ks: float = 1.25,
+        kt: float = 1.00,
+        kj: float = 0.30,
+        input_mode: str = "production",
+        manual_rows: int = None,
+        manual_cols: int = None,
     ):
         self.geo = BlastGeometry(
             diameter_mm=diameter_mm,
             rock_density=rock_density,
             bench_depth=bench_depth,
             explosive_type=explosive_type,
+            geometry_mode= geometry_mode,
+            custom_burden=custom_burden,
+            ks=ks,
+            kt=kt,
+            kj=kj,
         )
-
-        self.dist = HoleDistribution(
-            production_tonnes=production_tonnes,
-            tonnes_per_hole=self.geo.tonnes_per_hole,
-            num_benches=num_benches,
+        if input_mode == "manual" and manual_rows and manual_cols:
+            self.dist = HoleDistribution(
+                production_tonnes=manual_cols*manual_rows*num_benches*self.geo.tonnes_per_hole,
+                tonnes_per_hole=self.geo.tonnes_per_hole,
+                num_benches=num_benches,
+            )
+            self.dist.rows = manual_rows
+            self.dist.cols = manual_cols
+            self.dist.holes_per_bench = manual_rows * manual_cols
+            self.dist.total_holes = manual_rows * manual_cols * num_benches
+        else:
+            self.dist = HoleDistribution(
+                production_tonnes=production_tonnes,
+                tonnes_per_hole=self.geo.tonnes_per_hole,
+                num_benches=num_benches,
         )
 
         self.ppv_model = PPVModel(K=K, alpha=alpha, distance_m=ppv_distance_m)
@@ -101,8 +124,8 @@ class BlastOptimizer:
             }
 
     def _score(self, pat: str) -> float:
-        mcpds    = [self.results[p]["mcpd"]                           for p in self.PATTERNS]
-        durs     = [self.results[p]["seq_dict"]["blast_duration"]      for p in self.PATTERNS]
+        mcpds    = [self.results[p]["mcpd"] for p in self.PATTERNS]
+        durs     = [self.results[p]["seq_dict"]["blast_duration"] for p in self.PATTERNS]
 
         mcpd_min, mcpd_max = min(mcpds), max(mcpds)
         dur_min,  dur_max  = min(durs),  max(durs)
