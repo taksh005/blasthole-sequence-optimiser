@@ -18,6 +18,8 @@ class BlastGeometry:
             rock_density: float,
             bench_depth: float,
             explosive_type: str,
+            geometry_mode: str = "standard",
+            custom_burden: float = None,
             ks: float = 1.25,
             kt: float = 1.00,
             kj: float = 0.30
@@ -27,6 +29,8 @@ class BlastGeometry:
         self.bench_depth = bench_depth
         self.explosive_type = explosive_type
         self.explosive_density = self.EXPLOSIVES.get(explosive_type)
+        self.geometry_mode = geometry_mode
+        self.custom_burden = custom_burden
         self.ks = ks
         self.kt = kt
         self.kj = kj
@@ -34,7 +38,10 @@ class BlastGeometry:
 
     def _compute(self):
         d = self.diameter_mm / 1000.0
-        self.burden = round(0.024*self.diameter_mm + 0.85,3)
+        if self.geometry_mode == "custom" and self.custom_burden:
+            self.burden = round(self.custom_burden,3)
+        else:
+            self.burden = round(0.024*self.diameter_mm + 0.85,3)
         self.spacing = round(self.ks*self.burden,3)
         self.stemming = round(self.kt*self.burden,3)
         self.subgrade = round(self.kj*self.burden,3)
@@ -66,6 +73,7 @@ class BlastGeometry:
             "bench_depth":      self.bench_depth,
             "explosive_type":   self.explosive_type,
             "explosive_density":self.explosive_density,
+            "geometry_mode":    self.geometry_mode,
             "burden":           self.burden,
             "spacing":          self.spacing,
             "stemming":         self.stemming,
