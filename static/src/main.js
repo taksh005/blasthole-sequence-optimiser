@@ -21,6 +21,22 @@ const $$ = (s) => [...document.querySelectorAll(s)];
 const gv = (id) => parseFloat(document.getElementById(id)?.value) || 0;
 const gs = (id) => document.getElementById(id)?.value || "";
 
+function setInputMode(mode) {
+  document.getElementById('productionFields').style.display = mode === 'production' ? '' : 'none';
+  document.getElementById('manualFields').style.display     = mode === 'manual'     ? '' : 'none';
+  document.getElementById('modeProduction').classList.toggle('active', mode === 'production');
+  document.getElementById('modeManual').classList.toggle('active',     mode === 'manual');
+  window._inputMode = mode;
+}
+
+function setGeoMode(mode) {
+  document.getElementById('standardGeoFields').style.display = mode === 'standard' ? '' : 'none';
+  document.getElementById('customGeoFields').style.display   = mode === 'custom'   ? '' : 'none';
+  document.getElementById('geoStandard').classList.toggle('active', mode === 'standard');
+  document.getElementById('geoCustom').classList.toggle('active',   mode === 'custom');
+  window._geoMode = mode;
+}
+
 // ── Boot ──────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   await checkBackend();
@@ -28,6 +44,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initCanvas();
   initTabs();
   bindEvents();
+  window._inputMode = 'production';
+  window._geoMode   = 'standard';
   // Auto-run with defaults
   await runOptimise();
 });
@@ -116,25 +134,49 @@ function bindEvents() {
   document.getElementById("exportCSVBtn")  ?.addEventListener("click", handleCSV);
   document.getElementById("exportReportBtn")?.addEventListener("click", handleReport);
   document.getElementById("seqPref")       ?.addEventListener("change", runOptimise);
+  document.getElementById("modeProduction")?.addEventListener("click", () => setInputMode("production"));
+  document.getElementById("modeManual")    ?.addEventListener("click", () => setInputMode("manual"));
+  document.getElementById("geoStandard")   ?.addEventListener("click", () => setGeoMode("standard"));
+  document.getElementById("geoCustom")     ?.addEventListener("click", () => setGeoMode("custom"));
 }
 
 // ── Main API call ─────────────────────────────────────────────────
 async function runOptimise() {
   setBusy(true);
   try {
-    const payload = {
-      production_tonnes:  gv("production"),
-      diameter_mm:        gv("diameter"),
-      rock_density:       gv("density"),
-      bench_depth:        gv("depth"),
-      num_benches:        gv("benches"),
-      hole_delay_ms:      selectedDelay,
-      ppv_distance_m:     gv("ppvDist"),
-      K:                  gv("kConst"),
-      alpha:              gv("alpha"),
-      explosive_type:     gs("explosiveType"),
-      preferred_pattern:  gs("seqPref"),
-    };
+    const inputMode = window._inputMode || 'production';
+const geoMode   = window._geoMode   || 'standard';
+
+const payload = {
+  // mode flags
+  input_mode:        inputMode,
+  geometry_mode:     geoMode,
+
+  // production mode
+  production_tonnes: gv("production"),
+  num_benches:       inputMode === 'manual' ? gv("benchesManual") : gv("benches"),
+
+  // manual mode
+  rows:              inputMode === 'manual' ? gv("manualRows") : null,
+  cols:              inputMode === 'manual' ? gv("manualCols") : null,
+
+  // always required
+  diameter_mm:       gv("diameter"),
+  rock_density:      gv("density"),
+  bench_depth:       gv("depth"),
+  hole_delay_ms:     selectedDelay,
+  ppv_distance_m:    gv("ppvDist"),
+  K:                 gv("kConst"),
+  alpha:             gv("alpha"),
+  explosive_type:    gs("explosiveType"),
+  preferred_pattern: gs("seqPref"),
+
+  // custom geometry
+  custom_burden:     geoMode === 'custom' ? gv("customBurden")   : null,
+  spacing_ratio:     geoMode === 'custom' ? gv("spacingRatio")   : 1.15,
+  stemming_ratio:    geoMode === 'custom' ? gv("stemmingRatio")  : 0.70,
+  subgrade_ratio:    geoMode === 'custom' ? gv("subgradeRatio")  : 0.30,
+};
 
     result = await api.optimise(payload);
 
