@@ -219,4 +219,6 @@ if __name__ == "__main__":
     print("  Open that URL in your browser.")
     print("=" * 52)
     print()
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    if __name__ == "__main__":
+        port = int(os.environ.get("PORT", 5000))
+        app.run(debug=False, host="0.0.0.0", port=port)
