@@ -43,44 +43,107 @@
   <!-- ── SIDEBAR ────────────────────────────────────────────── -->
   <aside class="sidebar">
 
-    <div class="sec-label">Production &amp; Site</div>
+    <div class="sec-label">Hole Input Mode</div>
 
+<!-- Mode toggle buttons -->
+<div class="delay-group" style="margin-bottom:10px">
+  <button class="delay-btn active" id="modeProduction">From Production</button>
+  <button class="delay-btn" id="modeManual">Manual Rows/Cols</button>
+</div>
+
+<!-- Production mode fields -->
+<div id="productionFields">
+  <div class="field">
+    <label>Production required (tonnes)</label>
+    <input type="number" id="production" value="50000" min="1000" step="1000"/>
+  </div>
+  <div class="field">
+    <label>No. of benches</label>
+    <input type="number" id="benches" value="3" min="1" max="20"/>
+  </div>
+</div>
+
+<!-- Manual mode fields -->
+<div id="manualFields" style="display:none">
+  <div class="field-row">
     <div class="field">
-      <label>Production required (tonnes)</label>
-      <input type="number" id="production" value="50000" min="1000" step="1000"/>
+      <label>Rows</label>
+      <input type="number" id="manualRows" value="5" min="1" max="30"/>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Hole diameter (mm)</label>
-        <input type="number" id="diameter" value="115" min="50" max="500" step="5"/>
-      </div>
-      <div class="field">
-        <label>Rock density (t/m³)</label>
-        <input type="number" id="density" value="2.7" step="0.1" min="1.5" max="4.0"/>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Bench depth (m)</label>
-        <input type="number" id="depth" value="10" min="2" max="60" step="0.5"/>
-      </div>
-      <div class="field">
-        <label>No. of benches</label>
-        <input type="number" id="benches" value="3" min="1" max="20"/>
-      </div>
-    </div>
-
     <div class="field">
-      <label>Explosive type</label>
-      <select id="explosiveType">
-        <option value="ANFO">ANFO (0.85 t/m³)</option>
-        <option value="Emulsion">Emulsion (1.15 t/m³)</option>
-        <option value="ANFO/Emulsion blend">ANFO/Emulsion blend (1.00)</option>
-        <option value="Heavy ANFO">Heavy ANFO (1.05 t/m³)</option>
-        <option value="Slurry">Slurry (1.20 t/m³)</option>
-      </select>
+      <label>Columns</label>
+      <input type="number" id="manualCols" value="8" min="1" max="30"/>
     </div>
+  </div>
+  <div class="field">
+    <label>No. of benches</label>
+    <input type="number" id="benchesManual" value="1" min="1" max="20"/>
+  </div>
+</div>
 
+<div class="sec-label">Rock Properties</div>
+
+<div class="field-row">
+  <div class="field">
+    <label>Hole diameter (mm)</label>
+    <input type="number" id="diameter" value="115" min="50" max="500" step="5"/>
+  </div>
+  <div class="field">
+    <label>Rock density (t/m³)</label>
+    <input type="number" id="density" value="2.7" step="0.1" min="1.5" max="4.0"/>
+  </div>
+</div>
+
+<div class="field">
+  <label>Bench depth (m)</label>
+  <input type="number" id="depth" value="10" min="2" max="60" step="0.5"/>
+</div>
+
+<div class="field">
+  <label>Explosive type</label>
+  <select id="explosiveType">
+    <option value="ANFO">ANFO (0.85 t/m³)</option>
+    <option value="Emulsion">Emulsion (1.15 t/m³)</option>
+    <option value="ANFO/Emulsion blend">ANFO/Emulsion blend (1.00)</option>
+    <option value="Heavy ANFO">Heavy ANFO (1.05 t/m³)</option>
+    <option value="Slurry">Slurry (1.20 t/m³)</option>
+  </select>
+</div>
+
+<div class="sec-label">Geometry Mode</div>
+
+<div class="delay-group" style="margin-bottom:10px">
+  <button class="delay-btn active" id="geoStandard">Standard (Ash)</button>
+  <button class="delay-btn" id="geoCustom">Custom</button>
+</div>
+
+<!-- Standard mode — nothing extra needed, formula handles it -->
+<div id="standardGeoFields">
+  <div class="field-hint" style="margin-bottom:8px">
+    Burden = 0.024 × diameter + 0.85 &nbsp;|&nbsp; S = 1.25B &nbsp;|&nbsp; T = 1.00B &nbsp;|&nbsp; J = 0.30B
+  </div>
+</div>
+
+<!-- Custom mode -->
+<div id="customGeoFields" style="display:none">
+  <div class="field">
+    <label>Burden (m) — enter directly</label>
+    <input type="number" id="customBurden" value="2.5" step="0.1" min="0.5" max="20"/>
+  </div>
+  <div class="field">
+    <label>Spacing ratio (S = ? × B)</label>
+    <input type="number" id="spacingRatio" value="1.15" step="0.05" min="0.8" max="2.0"/>
+    <div class="field-hint">e.g. 1.15 means S = 1.15 × B</div>
+  </div>
+  <div class="field">
+    <label>Stemming ratio (T = ? × B)</label>
+    <input type="number" id="stemmingRatio" value="0.70" step="0.05" min="0.3" max="1.5"/>
+  </div>
+  <div class="field">
+    <label>Subgrade ratio (J = ? × B)</label>
+    <input type="number" id="subgradeRatio" value="0.30" step="0.05" min="0.1" max="0.8"/>
+  </div>
+</div>
     <div class="sec-label">PPV Parameters</div>
 
     <div class="field">
