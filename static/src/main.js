@@ -358,20 +358,59 @@ function renderPPVTab() {
   const { ppv_distance_curve, chosen: c, ppv_limits } = result;
   renderPPVChart("ppvChart", ppv_distance_curve, ppv_limits, gv("ppvDist"));
 
-  // Risk table
   const tbody = document.getElementById("ppvLimitsTbody");
-  if (tbody) {
-    tbody.innerHTML = ppv_limits.map((l) => {
-      const safe = result.chosen.ppv.safe_mcpd_commercial || "—";
-      const ok = c.ppv.ppv_mm_s <= l.limit_mm_s;
-      return `<tr>
-        <td>${l.label}</td>
-        <td>${l.limit_mm_s}</td>
-        <td style="color:${ok ? "#1D9E75" : "#E24B4A"};font-weight:700">${ok ? "✓ Safe" : "✗ Exceeds"}</td>
+  if (!tbody) return;
+
+  const myPPV = c.ppv.ppv_mm_s;
+
+  // Group by category for the section header rows
+  let lastCategory = null;
+
+  tbody.innerHTML = ppv_limits.map((l) => {
+    let categoryRow = "";
+
+    // Insert a section header when category changes
+    if (l.category !== lastCategory) {
+      lastCategory = l.category;
+      const catLabel = l.category === "A"
+        ? "(A) Buildings / structures not belonging to the owner"
+        : "(B) Buildings belonging to owner — limited span of life";
+      categoryRow = `
+        <tr>
+          <td colspan="6"
+              style="background:var(--bg-surface);
+                     color:var(--text-2);
+                     font-weight:600;
+                     font-size:10px;
+                     padding:6px 9px;
+                     letter-spacing:0.04em">
+            ${catLabel}
+          </td>
+        </tr>`;
+    }
+
+    // Check PPV against all three frequency limits
+    const safeLow  = myPPV <= l.freq_low;
+    const safeMid  = myPPV <= l.freq_mid;
+    const safeHigh = myPPV <= l.freq_high;
+
+    // Overall status — safe only if within the strictest (low freq) limit
+    const overallSafe = safeLow;
+    const statusColor = overallSafe ? "#1D9E75" : safeMid ? "#EF9F27" : "#E24B4A";
+    const statusText  = overallSafe ? "✓ Safe"  : safeMid ? "⚠ Check freq" : "✗ Exceeds";
+
+    return categoryRow + `
+      <tr>
+        <td style="color:var(--text-3);font-size:10px">${l.category}</td>
+        <td>${l.structure}</td>
+        <td style="text-align:center;color:${safeLow  ? '#1D9E75' : '#E24B4A'}">${l.freq_low}</td>
+        <td style="text-align:center;color:${safeMid  ? '#1D9E75' : '#E24B4A'}">${l.freq_mid}</td>
+        <td style="text-align:center;color:${safeHigh ? '#1D9E75' : '#E24B4A'}">${l.freq_high}</td>
+        <td style="font-weight:700;color:${statusColor}">${statusText} (${myPPV})</td>
       </tr>`;
-    }).join("");
-  }
+  }).join("");
 }
+
 
 // ── Exports ────────────────────────────────────────────────────────
 function handleCSV() {
