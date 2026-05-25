@@ -83,21 +83,21 @@ class PPVModel:
     def _classify(self, ppv: float) -> dict:
     # Uses the most conservative limit (historical structures, <8Hz = 2 mm/s)
     # as the threshold for safe/unsafe classification
-    if ppv < 2:
-        return {"level": "Safe",     "color": "#1D9E75",
-                "description": "Below all IS 6922 limits including sensitive structures."}
-    elif ppv < 5:
-        return {"level": "Low risk", "color": "#1D9E75",
-                "description": "Safe for most structures. Monitor sensitive/historical structures."}
-    elif ppv < 10:
-        return {"level": "Moderate", "color": "#EF9F27",
-                "description": "Within industrial limits. Exceeds sensitive structure limits."}
-    elif ppv < 25:
-        return {"level": "High",     "color": "#E24B4A",
-                "description": "Exceeds domestic structure limits. Review blast design."}
-    else:
-        return {"level": "Extreme",  "color": "#E24B4A",
-                "description": "Exceeds all IS 6922 limits. Blast design must be revised."}
+        if ppv < 2:
+            return {"level": "Safe",     "color": "#1D9E75",
+                    "description": "Below all IS 6922 limits including sensitive structures."}
+        elif ppv < 5:
+            return {"level": "Low risk", "color": "#1D9E75",
+                    "description": "Safe for most structures. Monitor sensitive/historical structures."}
+        elif ppv < 10:
+            return {"level": "Moderate", "color": "#EF9F27",
+                    "description": "Within industrial limits. Exceeds sensitive structure limits."}
+        elif ppv < 25:
+            return {"level": "High",     "color": "#E24B4A",
+                    "description": "Exceeds domestic structure limits. Review blast design."}
+        else:
+            return {"level": "Extreme",  "color": "#E24B4A",
+                    "description": "Exceeds all IS 6922 limits. Blast design must be revised."}
                 
     def _safe_mcpd_for_limit(self, ppv_limit_mm_s: float) -> float:
         try:
