@@ -269,10 +269,22 @@
           <canvas id="ppvChart"></canvas>
         </div>
         <div class="r-sec-title">Regulatory Limits Check</div>
-        <table class="ppv-table">
-          <thead><tr><th>Structure type</th><th>Limit (mm/s)</th><th>Status</th></tr></thead>
-          <tbody id="ppvLimitsTbody"></tbody>
-        </table>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-bottom:8px">
+  IS 6922 — PPV limits (mm/s) by structure type and dominant frequency
+</div>
+<table class="ppv-table">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Structure type</th>
+      <th>&lt; 8 Hz</th>
+      <th>8 – 25 Hz</th>
+      <th>&gt; 25 Hz</th>
+      <th>Status (your PPV)</th>
+    </tr>
+  </thead>
+  <tbody id="ppvLimitsTbody"></tbody>
+</table>
       </div>
     </div>
 
