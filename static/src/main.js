@@ -145,37 +145,37 @@ async function runOptimise() {
   setBusy(true);
   try {
     const inputMode = window._inputMode || 'production';
-const geoMode   = window._geoMode   || 'standard';
-
-const payload = {
-  // mode flags
-  input_mode:        inputMode,
-  geometry_mode:     geoMode,
-
-  // production mode
-  production_tonnes: gv("production"),
-  num_benches:       inputMode === 'manual' ? gv("benchesManual") : gv("benches"),
-
-  // manual mode
-  rows:              inputMode === 'manual' ? gv("manualRows") : null,
-  cols:              inputMode === 'manual' ? gv("manualCols") : null,
-
-  // always required
-  diameter_mm:       gv("diameter"),
-  rock_density:      gv("density"),
-  bench_depth:       gv("depth"),
-  hole_delay_ms:     selectedDelay,
-  ppv_distance_m:    gv("ppvDist"),
-  K:                 gv("kConst"),
-  alpha:             gv("alpha"),
-  explosive_type:    gs("explosiveType"),
-  preferred_pattern: gs("seqPref"),
-
-  // custom geometry
-  custom_burden:     geoMode === 'custom' ? gv("customBurden")   : null,
-  spacing_ratio:     geoMode === 'custom' ? gv("spacingRatio")   : 1.15,
-  stemming_ratio:    geoMode === 'custom' ? gv("stemmingRatio")  : 0.70,
-  subgrade_ratio:    geoMode === 'custom' ? gv("subgradeRatio")  : 0.30,
+  const geoMode   = window._geoMode   || 'standard';
+  
+  const payload = {
+    // mode flags
+    input_mode:        inputMode,
+    geometry_mode:     geoMode,
+  
+    // production mode
+    production_tonnes: gv("production"),
+    num_benches:       inputMode === 'manual' ? gv("benchesManual") : gv("benches"),
+  
+    // manual mode
+    rows:              inputMode === 'manual' ? gv("manualRows") : null,
+    cols:              inputMode === 'manual' ? gv("manualCols") : null,
+  
+    // always required
+    diameter_mm:       gv("diameter"),
+    rock_density:      gv("density"),
+    bench_depth:       gv("depth"),
+    hole_delay_ms:     selectedDelay,
+    ppv_distance_m:    gv("ppvDist"),
+    K:                 gv("kConst"),
+    alpha:             gv("alpha"),
+    explosive_type:    gs("explosiveType"),
+    preferred_pattern: gs("seqPref"),
+  
+    // custom geometry
+    custom_burden:     geoMode === 'custom' ? gv("customBurden")   : null,
+    spacing_ratio:     geoMode === 'custom' ? gv("spacingRatio")   : 1.15,
+    stemming_ratio:    geoMode === 'custom' ? gv("stemmingRatio")  : 0.70,
+    subgrade_ratio:    geoMode === 'custom' ? gv("subgradeRatio")  : 0.30,
 };
 
     result = await api.optimise(payload);
@@ -355,63 +355,71 @@ function renderCompare() {
 // ── PPV tab ────────────────────────────────────────────────────────
 function renderPPVTab() {
   if (!result) return;
-  const { ppv_distance_curve, chosen: c } = result;
-  const ppv_limits = c.ppv.limits;
-  renderPPVChart("ppvChart", ppv_distance_curve, ppv_limits, gv("ppvDist"));
+
+  const curve  = result.ppv_distance_curve;
+  const limits = result.chosen.ppv.limits;
+  const myPPV  = result.chosen.ppv.ppv_mm_s;
+  const dist   = gv("ppvDist");
+
+  renderPPVChart("ppvChart", curve, limits, dist, myPPV);
 
   const tbody = document.getElementById("ppvLimitsTbody");
   if (!tbody) return;
 
-  const myPPV = c.ppv.ppv_mm_s;
-
-  // Group by category for the section header rows
   let lastCategory = null;
+  let html = "";
 
-  tbody.innerHTML = ppv_limits.map((l) => {
-    let categoryRow = "";
-
-    // Insert a section header when category changes
+  limits.forEach((l) => {
+    // Section header row when category changes
     if (l.category !== lastCategory) {
       lastCategory = l.category;
-      const catLabel = l.category === "A"
+      const label = l.category === "A"
         ? "(A) Buildings / structures not belonging to the owner"
         : "(B) Buildings belonging to owner — limited span of life";
-      categoryRow = `
+      html += `
         <tr>
-          <td colspan="6"
-              style="background:var(--bg-surface);
-                     color:var(--text-2);
-                     font-weight:600;
-                     font-size:10px;
-                     padding:6px 9px;
-                     letter-spacing:0.04em">
-            ${catLabel}
+          <td colspan="5"
+            style="background:var(--bg-surface);color:var(--text-2);
+                   font-weight:600;font-size:10px;padding:6px 9px;
+                   letter-spacing:0.04em">
+            ${label}
           </td>
         </tr>`;
     }
 
-    // Check PPV against all three frequency limits
+    // Check PPV against each frequency column independently
     const safeLow  = myPPV <= l.freq_low;
     const safeMid  = myPPV <= l.freq_mid;
     const safeHigh = myPPV <= l.freq_high;
 
-    // Overall status — safe only if within the strictest (low freq) limit
-    const overallSafe = safeLow;
-    const statusColor = overallSafe ? "#1D9E75" : safeMid ? "#EF9F27" : "#E24B4A";
-    const statusText  = overallSafe ? "✓ Safe"  : safeMid ? "⚠ Check freq" : "✗ Exceeds";
+    // Cell: shows the limit value, coloured green if safe red if exceeds
+    const cell = (limit, safe) => `
+      <td style="text-align:center;font-weight:700;
+                 color:${safe ? "#1D9E75" : "#E24B4A"}">
+        ${limit}
+        <div style="font-size:9px;font-weight:400;
+                    color:${safe ? "#1D9E75" : "#E24B4A"}">
+          ${safe ? "✓" : "✗"}
+        </div>
+      </td>`;
 
-    return categoryRow + `
+    html += `
       <tr>
-        <td style="color:var(--text-3);font-size:10px">${l.category}</td>
-        <td>${l.structure}</td>
-        <td style="text-align:center;color:${safeLow  ? '#1D9E75' : '#E24B4A'}">${l.freq_low}</td>
-        <td style="text-align:center;color:${safeMid  ? '#1D9E75' : '#E24B4A'}">${l.freq_mid}</td>
-        <td style="text-align:center;color:${safeHigh ? '#1D9E75' : '#E24B4A'}">${l.freq_high}</td>
-        <td style="font-weight:700;color:${statusColor}">${statusText} (${myPPV})</td>
+        <td style="color:var(--text-3);font-size:10px;
+                   text-align:center">${l.category}</td>
+        <td>${l.structure}
+          <div style="font-size:9px;color:var(--text-3);margin-top:2px">
+            Your PPV: ${myPPV} mm/s
+          </div>
+        </td>
+        ${cell(l.freq_low,  safeLow)}
+        ${cell(l.freq_mid,  safeMid)}
+        ${cell(l.freq_high, safeHigh)}
       </tr>`;
-  }).join("");
-}
+  });
 
+  tbody.innerHTML = html;
+}
 
 // ── Exports ────────────────────────────────────────────────────────
 function handleCSV() {
