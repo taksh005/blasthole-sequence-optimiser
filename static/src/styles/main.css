@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 
 :root {
   --bg-deep: #0d1117;
@@ -15,8 +15,8 @@
   --green: #1D9E75;
   --amber: #EF9F27;
   --blue: #4A8FD4;
-  --mono: 'IBM Plex Mono','Courier New',monospace;
-  --sans: 'IBM Plex Sans',system-ui,sans-serif;
+  --mono: 'Space Grotesk';
+  --sans: 'Space Grotesk';
   --r: 5px; --rL: 10px;
 }
 
