@@ -355,7 +355,8 @@ function renderCompare() {
 // ── PPV tab ────────────────────────────────────────────────────────
 function renderPPVTab() {
   if (!result) return;
-  const { ppv_distance_curve, chosen: c, ppv_limits } = result;
+  const { ppv_distance_curve, chosen: c } = result;
+  const ppv_limits = c.ppv.limits;
   renderPPVChart("ppvChart", ppv_distance_curve, ppv_limits, gv("ppvDist"));
 
   const tbody = document.getElementById("ppvLimitsTbody");
