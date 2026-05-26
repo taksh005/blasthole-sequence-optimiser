@@ -8,32 +8,58 @@ let ppvChart    = null;
 let mcpdChart   = null;
 
 // ── PPV vs Distance Curve ─────────────────────────────────────
-export function renderPPVChart(canvasId, curveData, limits, markedDistance) {
+export function renderPPVChart(canvasId, curveData, limits, markedDistance, myPPV) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-
   if (ppvChart) { ppvChart.destroy(); ppvChart = null; }
+  if (!curveData || curveData.length === 0) return;
 
   const labels = curveData.map((p) => p.distance_m);
   const values = curveData.map((p) => p.ppv_mm_s);
 
-  // Limit annotation lines
-  const limitLines = limits.map((l) => ({
-    type: "line",
-    yMin: l.limit_mm_s,
-    yMax: l.limit_mm_s,
-    borderColor: l.color + "88",
-    borderWidth: 1,
-    borderDash: [5, 4],
-    label: {
-      content: l.label.split("(")[0].trim(),
-      enabled: true,
-      position: "end",
-      color: l.color,
-      font: { size: 9, family: "'IBM Plex Mono', monospace" },
-      backgroundColor: "transparent",
+  // Draw the strictest limit line for each frequency band
+  // (minimum across all structures for that frequency)
+  const strictLow  = Math.min(...limits.map((l) => l.freq_low));
+  const strictMid  = Math.min(...limits.map((l) => l.freq_mid));
+  const strictHigh = Math.min(...limits.map((l) => l.freq_high));
+
+  const limitLines = [
+    {
+      label:       `Strictest < 8 Hz limit (${strictLow} mm/s)`,
+      value:       strictLow,
+      color:       "rgba(226,75,74,0.7)",
     },
+    {
+      label:       `Strictest 8–25 Hz limit (${strictMid} mm/s)`,
+      value:       strictMid,
+      color:       "rgba(239,159,39,0.7)",
+    },
+    {
+      label:       `Strictest > 25 Hz limit (${strictHigh} mm/s)`,
+      value:       strictHigh,
+      color:       "rgba(74,143,212,0.7)",
+    },
+  ];
+
+  const limitDatasets = limitLines.map((l) => ({
+    label:       l.label,
+    data:        labels.map(() => l.value),
+    borderColor: l.color,
+    borderWidth: 1.5,
+    borderDash:  [5, 4],
+    pointRadius: 0,
+    fill:        false,
+    tension:     0,
   }));
+
+  // Dot at the user's reference distance
+  const closestIdx = labels.reduce((best, d, i) =>
+    Math.abs(d - markedDistance) < Math.abs(labels[best] - markedDistance)
+      ? i : best, 0
+  );
+  const markerData = labels.map((_, i) =>
+    i === closestIdx ? values[closestIdx] : null
+  );
 
   ppvChart = new Chart(canvas, {
     type: "line",
@@ -41,51 +67,53 @@ export function renderPPVChart(canvasId, curveData, limits, markedDistance) {
       labels,
       datasets: [
         {
-          label: "PPV (mm/s)",
-          data: values,
-          borderColor: "#EF9F27",
+          label:           "PPV (mm/s)",
+          data:            values,
+          borderColor:     "#EF9F27",
           backgroundColor: "rgba(239,159,39,0.08)",
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.4,
-          fill: true,
+          borderWidth:     2.5,
+          pointRadius:     0,
+          tension:         0.4,
+          fill:            true,
         },
-        // Marker for selected distance
         {
-          label: `At ${markedDistance}m`,
-          data: labels.map((d) =>
-            d === markedDistance
-              ? values[labels.indexOf(d)]
-              : null
-          ),
-          borderColor: "#E24B4A",
+          label:           `At ${markedDistance} m — ${myPPV} mm/s`,
+          data:            markerData,
+          borderColor:     "#E24B4A",
           backgroundColor: "#E24B4A",
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          showLine: false,
+          pointRadius:     7,
+          showLine:        false,
         },
+        ...limitDatasets,
       ],
     },
     options: {
-      responsive: true,
+      responsive:          true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          labels: {
+            color:    "#8a9bb5",
+            font:     { size: 10, family: "'IBM Plex Mono', monospace" },
+            boxWidth: 16,
+          },
+        },
         tooltip: {
           callbacks: {
-            label: (ctx) => `PPV: ${ctx.parsed.y.toFixed(2)} mm/s`,
             title: (ctx) => `Distance: ${ctx[0].label} m`,
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)} mm/s`,
           },
         },
       },
       scales: {
         x: {
-          title: { display: true, text: "Distance (m)", color: "#8a9bb5", font: { size: 11 } },
-          ticks: { color: "#8a9bb5", maxTicksLimit: 8 },
+          title: { display: true, text: "Distance (m)", color: "#8a9bb5" },
+          ticks: { color: "#8a9bb5", maxTicksLimit: 10 },
           grid:  { color: "rgba(255,255,255,0.05)" },
         },
         y: {
-          title: { display: true, text: "PPV (mm/s)", color: "#8a9bb5", font: { size: 11 } },
+          title: { display: true, text: "PPV (mm/s)", color: "#8a9bb5" },
           ticks: { color: "#8a9bb5" },
           grid:  { color: "rgba(255,255,255,0.05)" },
         },
