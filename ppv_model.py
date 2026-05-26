@@ -3,45 +3,42 @@ import logging
 logger = logging.getLogger(__name__)
 
 PPV_LIMITS = [
-    # (A) Buildings/structures NOT belonging to the owner
     {
-        "category":    "A",
-        "structure":   "Domestic houses / Kuchha brick & cement",
-        "freq_low":    5,    # < 8 Hz
-        "freq_mid":    10,   # 8-25 Hz
-        "freq_high":   15,   # > 25 Hz
+        "category":  "A",
+        "structure": "Domestic houses / Kuchha brick & cement",
+        "freq_low":  5,
+        "freq_mid":  10,
+        "freq_high": 15,
     },
     {
-        "category":    "A",
-        "structure":   "Industrial buildings — RCC & framed structures",
-        "freq_low":    10,
-        "freq_mid":    20,
-        "freq_high":   25,
+        "category":  "A",
+        "structure": "Industrial buildings — RCC & framed structures",
+        "freq_low":  10,
+        "freq_mid":  20,
+        "freq_high": 25,
     },
     {
-        "category":    "A",
-        "structure":   "Objects of historical importance & sensitive structures",
-        "freq_low":    2,
-        "freq_mid":    5,
-        "freq_high":   10,
-    },
-    # (B) Buildings belonging to owner — limited span of life
-    {
-        "category":    "B",
-        "structure":   "Domestic houses / Kuchha brick & cement (owner)",
-        "freq_low":    10,
-        "freq_mid":    15,
-        "freq_high":   25,
+        "category":  "A",
+        "structure": "Historical & sensitive structures",
+        "freq_low":  2,
+        "freq_mid":  5,
+        "freq_high": 10,
     },
     {
-        "category":    "B",
-        "structure":   "Industrial buildings — RCC & framed structures (owner)",
-        "freq_low":    15,
-        "freq_mid":    25,
-        "freq_high":   50,
+        "category":  "B",
+        "structure": "Domestic houses / Kuchha brick & cement (owner)",
+        "freq_low":  10,
+        "freq_mid":  15,
+        "freq_high": 25,
+    },
+    {
+        "category":  "B",
+        "structure": "Industrial buildings — RCC & framed (owner)",
+        "freq_low":  15,
+        "freq_mid":  25,
+        "freq_high": 50,
     },
 ]
-
 class PPVModel:
     def __init__(
             self,
