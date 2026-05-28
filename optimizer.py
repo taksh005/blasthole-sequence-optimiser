@@ -141,15 +141,22 @@ class BlastOptimizer:
 
     def _pick_best(self) -> str:
         if self.preferred_pattern != "auto" and self.preferred_pattern in self.results:
-            logger.info("User-preferred pattern: %s", self.preferred_pattern)
             return self.preferred_pattern
+        def sort_key(p):
+            mcpd     = round(self.results[p]["mcpd"], 2)
+            duration = self.results[p]["seq_dict"]["blast_duration"]
+            return (mcpd, duration)
+    
+        for p in self.PATTERNS:
+            mcpd     = round(self.results[p]["mcpd"], 2)
+            duration = self.results[p]["seq_dict"]["blast_duration"]
+            logger.info("Pattern: %-10s | MCPD: %.2f kg | Duration: %d ms", p, mcpd, duration)
+    
+        best = min(self.PATTERNS, key=sort_key)
+    
+        for pat in self.PATTERNS:
+            self.results[pat]["score"] = round(self.results[pat]["mcpd"], 2)
 
-        scores = {pat: self._score(pat) for pat in self.PATTERNS}
-        for pat, score in scores.items():
-            self.results[pat]["score"] = round(score, 4)
-
-        best = min(scores, key=scores.get)
-        logger.info("Pattern scores: %s | Winner: %s", scores, best)
         return best
 
     def to_dict(self) -> dict:
