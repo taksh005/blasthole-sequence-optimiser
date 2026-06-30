@@ -55,8 +55,14 @@ class FiringSequence:
             return r*hd + c*rd
         elif self.pattern == "v_shape":
             mid = (self.cols-1)/2.0
-            dist_from_centre = abs(c-mid)
-            return round(r*rd + dist_from_centre*hd)
+            if self.cols % 2 == 0:
+        
+                left_centre  = self.cols // 2 - 1
+                right_centre = self.cols // 2
+                dist_from_centre = min(abs(c - left_centre), abs(c - right_centre))
+            else:
+                dist_from_centre = abs(c - int(mid))
+            return r * self.row_delay_ms + dist_from_centre * self.hole_delay_ms
         
     def _build(self):
         hole_id = 1

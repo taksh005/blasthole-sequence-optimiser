@@ -49,9 +49,9 @@ class BlastOptimizer:
         preferred_pattern: str = "auto",
         geometry_mode: str ="standard",
         custom_burden: float = None,
-        ks: float = 1.25,
-        kt: float = 1.00,
-        kj: float = 0.30,
+        spacing_ratio: float = 1.15,
+        stemming_ratio: float = 1.00,
+        subgrade_ratio: float = 0.30,
         input_mode: str = "production",
         manual_rows: int = None,
         manual_cols: int = None,
@@ -63,9 +63,9 @@ class BlastOptimizer:
             explosive_type=explosive_type,
             geometry_mode= geometry_mode,
             custom_burden=custom_burden,
-            ks=ks,
-            kt=kt,
-            kj=kj,
+            spacing_ratio   = spacing_ratio,  
+            stemming_ratio  = stemming_ratio,   
+            subgrade_ratio  = subgrade_ratio,
         )
         if input_mode == "manual" and manual_rows and manual_cols:
             self.dist = HoleDistribution(
