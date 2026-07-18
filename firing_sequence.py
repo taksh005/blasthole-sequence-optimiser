@@ -102,17 +102,17 @@ class FiringSequence:
         max_simultaneous = 0
         worst_delay_ms   = delays[0] if delays else 0
 
-        for d in delays:
-            count = sum(
-                len(self.delay_groups[other])
-                for other in delays
-                if d <= other < d + WINDOW_MS
-            )
-        if count > max_simultaneous:
-            max_simultaneous = count
-            worst_delay_ms   = d
-
-
+        left_ptr = 0
+        current_window_count = 0
+        for right_ptr in range(len(delays)):
+            current_window_count += len(self.delay_groups[delay[right_ptr]])
+            while delays[right_ptr] - delays[left_ptr] >= WINDOW_MS:
+                current_window_count -= len(self.delay_groups[delays[left_ptr]])
+                left_ptr += 1
+            if current_window_count > max_simultaneous:
+                max_simultaneous = current_window_count
+                worst_delay_ms = delays[left_ptr]
+                
         self.max_simultaneous = max_simultaneous
         self.worst_delay_ms = worst_delay_ms
         self.mcpd = round(max_simultaneous * self.charge_per_hole, 2)
