@@ -123,41 +123,32 @@ class BlastOptimizer:
                 "score":        0,
             }
 
-    def _score(self, pat: str) -> float:
-        mcpds    = [self.results[p]["mcpd"] for p in self.PATTERNS]
-        durs     = [self.results[p]["seq_dict"]["blast_duration"] for p in self.PATTERNS]
-
-        mcpd_min, mcpd_max = min(mcpds), max(mcpds)
-        dur_min,  dur_max  = min(durs),  max(durs)
-
-        r = self.results[pat]
-
-        mcpd_norm = ((r["mcpd"] - mcpd_min) / (mcpd_max - mcpd_min + 1e-9))
-        dur_norm  = ((r["seq_dict"]["blast_duration"] - dur_min) / (dur_max - dur_min + 1e-9))
-
-        frag_bonus = {"row": 0.05, "diagonal": 0.0, "v_shape": 0.0}
-
-        return 0.60 * mcpd_norm + 0.30 * dur_norm + frag_bonus.get(pat, 0)
-
-    def _pick_best(self) -> str:
+    def _score_and_pick_best(self) -> str:
         if self.preferred_pattern != "auto" and self.preferred_pattern in self.results:
             return self.preferred_pattern
-        def sort_key(p):
-            mcpd     = round(self.results[p]["mcpd"], 2)
-            duration = self.results[p]["seq_dict"]["blast_duration"]
-            return (mcpd, duration)
-    
-        for p in self.PATTERNS:
-            mcpd     = round(self.results[p]["mcpd"], 2)
-            duration = self.results[p]["seq_dict"]["blast_duration"]
-            logger.info("Pattern: %-10s | MCPD: %.2f kg | Duration: %d ms", p, mcpd, duration)
-    
-        best = min(self.PATTERNS, key=sort_key)
-    
-        for pat in self.PATTERNS:
-            self.results[pat]["score"] = round(self.results[pat]["mcpd"], 2)
+        
+        frag_penalty = {"row": 0.0, "diagonal": -0.05, "v_shape": -0.05}
 
-        return best
+        for pat in self.PATTERNS:
+            r = self.results[pat]
+            mcpd = round(r["mcpd"], 2)
+            duration = r["seq_dict"]["blast_duration"]
+            score = mcpd + (duration / 10000.0) + frag_penalty.get(pat, 0)
+            r["score"] = round(score, 3)
+            r["mcpd_rounded"] = mcpd 
+            
+            logger.info("Pattern: %-10s | MCPD: %.2f kg | Duration: %d ms | Score: %.3f", 
+                        pat, mcpd, duration, score)
+        def selection_criteria(p):
+            return (
+                self.results[p]["mcpd_rounded"], 
+                self.results[p]["seq_dict"]["blast_duration"]
+            )
+
+        best_pattern = min(self.PATTERNS, key=selection_criteria)
+        
+        logger.info("Selected Best Pattern: %s", best_pattern.upper())
+        return best_pattern
 
     def to_dict(self) -> dict:
         comparison = []
