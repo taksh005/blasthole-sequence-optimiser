@@ -123,7 +123,7 @@ class BlastOptimizer:
                 "score":        0,
             }
 
-    def _score_and_pick_best(self) -> str:
+    def _pick_best(self) -> str:
         if self.preferred_pattern != "auto" and self.preferred_pattern in self.results:
             return self.preferred_pattern
         
