@@ -100,12 +100,12 @@ class FiringSequence:
         delays = sorted(self.delay_groups.keys())
 
         max_simultaneous = 0
-        worst_delay_ms   = delays[0] if delays else 0
+        worst_delay_ms   = delays[0]
 
         left_ptr = 0
         current_window_count = 0
         for right_ptr in range(len(delays)):
-            current_window_count += len(self.delay_groups[delay[right_ptr]])
+            current_window_count += len(self.delay_groups[delays[right_ptr]])
             while delays[right_ptr] - delays[left_ptr] >= WINDOW_MS:
                 current_window_count -= len(self.delay_groups[delays[left_ptr]])
                 left_ptr += 1
